@@ -468,9 +468,9 @@ class KingfisherManagerTests: XCTestCase {
         let url = URL(string: URLString)!
 
         manager.retrieveImage(with: url, options: [.fromMemoryCacheOrRefresh], progressBlock: nil) {
-            image, _, type, _ in
+            image, error, type, _ in
             // Can download and cache normally
-            XCTAssertNotNil(image)
+            XCTAssertNotNil(image, "image is nil. Error: \(error)")
             XCTAssertEqual(type, .none)
 
             // Can still be got from memory even when disk cache cleared.
