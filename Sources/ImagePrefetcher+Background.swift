@@ -14,7 +14,7 @@ extension ImagePrefetcher {
      Download the resources and cache them without using the main thread.
      This is useful in applications, where UI performance is an important factor.
      */
-    class func backgroundDownload(forUrls urls: [URL]) {
+    public class func backgroundDownload(forUrls urls: [URL]) {
         let manager = KingfisherManager.shared
         for url in urls {
             if manager.cache.imageCachedType(forKey: url.absoluteString) == .none {
