@@ -186,6 +186,25 @@ public class ImagePrefetcher {
             self.tasks.values.forEach { $0.cancel() }
         }
     }
+
+    /**
+     Download the resources and cache them without using the main thread.
+     This is useful in applications, where UI performance is an important factor.
+     */
+    public func backgroundDownload() {
+        let manager = KingfisherManager.shared
+        for resource in prefetchResources {
+            if manager.cache.imageCachedType(forKey: resource.downloadURL.absoluteString) == .none {
+                URLSession.shared.dataTask(with: resource.downloadURL, completionHandler: { (data, _, _) in
+                    if let data = data, let image = UIImage(data: data) {
+                        if manager.cache.imageCachedType(forKey: resource.downloadURL.absoluteString) == .none {
+                            manager.cache.store(image, forKey: resource.downloadURL.absoluteString)
+                        }
+                    }
+                }).resume()
+            }
+        }
+    }
     
     func downloadAndCache(_ resource: Resource) {
 
