@@ -21,7 +21,7 @@ public class BackgroundImagePrefetcher {
      Download the resources and cache them without using the main thread.
      This is useful in applications, where UI performance is an important factor.
      */
-    public func backgroundDownload(forUrls urls: [URL]) {
+    public func backgroundDownload() {
         let manager = KingfisherManager.shared
         for url in self.urls {
             if manager.cache.imageCachedType(forKey: url.absoluteString) == .none {
