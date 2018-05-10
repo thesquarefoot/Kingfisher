@@ -12,11 +12,20 @@ public class BackgroundImageFetch {
 
     private var urls: [URL] = []
     private var manager: KingfisherManager = KingfisherManager.shared
-    private var session: URLSession = URLSession.shared
+    private var session: URLSession!
 
     public convenience init(urls: [URL]) {
         self.init()
         self.urls = urls
+        let config = URLSessionConfiguration.default
+        config.httpMaximumConnectionsPerHost = 5
+        config.timeoutIntervalForResource = 120
+        config.timeoutIntervalForRequest = 120
+        self.session = URLSession(configuration: config)
+    }
+
+    public func stop() {
+        session.invalidateAndCancel()
     }
 
     public func fetch() {
