@@ -12,7 +12,7 @@ public class BackgroundImageFetch {
 
     private var urls: [URL] = []
     private var manager: KingfisherManager = KingfisherManager.shared
-    private var session: URLSession!
+    public var session: URLSession?
 
     public convenience init(urls: [URL]) {
         self.init()
@@ -24,15 +24,20 @@ public class BackgroundImageFetch {
         self.session = URLSession(configuration: config)
     }
 
+    @available(iOS 9.0, *)
     public func stop() {
-        session.invalidateAndCancel()
+        session?.getAllTasks(completionHandler: { (tasks) in
+            for task in tasks {
+                task.cancel()
+            }
+        })
     }
 
     public func fetch() {
         DispatchQueue.global(qos: .background).async {
             for imageUrl in self.urls {
                 if self.manager.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
-                    self.session.dataTask(with: imageUrl, completionHandler: { (data, _, _) in
+                    self.session?.dataTask(with: imageUrl, completionHandler: { (data, _, _) in
                         if let data = data, let image = UIImage(data: data) {
                             if self.manager.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
                                 self.manager.cache.store(image, forKey: imageUrl.absoluteString)
