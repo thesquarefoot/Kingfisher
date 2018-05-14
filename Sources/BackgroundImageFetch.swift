@@ -17,11 +17,12 @@ public class BackgroundImageFetch {
     public convenience init(urls: [URL]) {
         self.init()
         self.urls = urls
-        let config = URLSessionConfiguration.default
+        let config = URLSessionConfiguration.ephemeral
         config.httpMaximumConnectionsPerHost = 5
         config.timeoutIntervalForResource = 120
         config.timeoutIntervalForRequest = 120
         self.session = URLSession(configuration: config)
+
     }
 
     @available(iOS 9.0, *)
@@ -30,20 +31,27 @@ public class BackgroundImageFetch {
             for task in tasks {
                 task.cancel()
             }
+            self.session?.finishTasksAndInvalidate()
         })
     }
 
+    lazy var fetchQueue: OperationQueue = {
+        var queue = OperationQueue()
+        return queue
+    }()
+
     public func fetch() {
-        DispatchQueue.global(qos: .background).async {
+        fetchQueue.addOperation {
             for imageUrl in self.urls {
                 if self.manager.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
-                    self.session?.dataTask(with: imageUrl, completionHandler: { (data, _, _) in
-                        if let data = data, let image = UIImage(data: data) {
+                    let dataTask = self.session?.dataTask(with: imageUrl, completionHandler: { (data, _, _) in
+                        if let data = data, let image = Image(data: data) {
                             if self.manager.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
-                                self.manager.cache.store(image, forKey: imageUrl.absoluteString)
+                                self.manager.cache.store(image, original: data, forKey: imageUrl.absoluteString)
                             }
                         }
-                    }).resume()
+                    })
+                    dataTask?.resume()
                 }
             }
         }
