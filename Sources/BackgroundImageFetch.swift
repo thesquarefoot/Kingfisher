@@ -11,7 +11,7 @@ import UIKit
 public class BackgroundImageFetch {
 
     private var urls: [URL] = []
-    private var manager: KingfisherManager = KingfisherManager.shared
+    private var manager: KingfisherManager? = KingfisherManager.shared
     public var session: URLSession?
 
     public convenience init(urls: [URL]) {
@@ -22,7 +22,7 @@ public class BackgroundImageFetch {
         config.timeoutIntervalForResource = 120
         config.timeoutIntervalForRequest = 120
         self.session = URLSession(configuration: config)
-
+        self.manager?.cache.maxDiskCacheSize = 1
     }
 
     @available(iOS 9.0, *)
@@ -31,23 +31,24 @@ public class BackgroundImageFetch {
             for task in tasks {
                 task.cancel()
             }
-            self.session?.finishTasksAndInvalidate()
+            self.manager = nil
         })
     }
 
     lazy var fetchQueue: OperationQueue = {
         var queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 5
         return queue
     }()
 
     public func fetch() {
         fetchQueue.addOperation {
             for imageUrl in self.urls {
-                if self.manager.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
+                if self.manager?.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
                     let dataTask = self.session?.dataTask(with: imageUrl, completionHandler: { (data, _, _) in
                         if let data = data, let image = Image(data: data) {
-                            if self.manager.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
-                                self.manager.cache.store(image, original: data, forKey: imageUrl.absoluteString)
+                            if self.manager?.cache.imageCachedType(forKey: imageUrl.absoluteString) == .none {
+                                self.manager?.cache.store(image, original: data, forKey: imageUrl.absoluteString)
                             }
                         }
                     })
