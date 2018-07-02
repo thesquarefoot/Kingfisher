@@ -85,6 +85,31 @@ class ImagePrefetcherTests: XCTestCase {
         
         waitForExpectations(timeout: 5, handler: nil)
     }
+
+    func testBackgroundPrefetchingImages() {
+        let expectation = self.expectation(description: "wait for prefetching images on background")
+
+        var urls = [URL]()
+        for URLString in testKeys {
+            _ = stubRequest("GET", URLString).andReturn(200)?.withBody(testImageData)
+            urls.append(URL(string: URLString)!)
+        }
+
+        var progressCalledCount = 0
+        let prefetcher = ImagePrefetcher(urls: urls, options: nil,
+                                         progressBlock: { (skippedResources, failedResources, completedResources) -> Void in
+                                            progressCalledCount += 1
+        },
+                                         completionHandler: {(skippedResources, failedResources, completedResources) -> Void in
+                                            expectation.fulfill()
+                                            for url in urls {
+                                                XCTAssertTrue(KingfisherManager.shared.cache.imageCachedType(forKey: url.absoluteString).cached)
+                                            }
+        })
+        prefetcher.startBackgroundCaching()
+
+        waitForExpectations(timeout: 5, handler: nil)
+    }
     
     func testCancelPrefetching() {
         let expectation = self.expectation(description: "wait for prefetching images")

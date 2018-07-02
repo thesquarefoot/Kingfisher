@@ -364,6 +364,15 @@ open class ImageDownloader {
         }
         return downloadTask
     }
+
+    @available(iOS 9.0, *)
+    public func cancelBackgroundTasks() {
+        session?.getAllTasks(completionHandler: { (tasks) in
+            for task in tasks {
+                task.cancel()
+            }
+        })
+    }
     
 }
 
